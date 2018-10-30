@@ -21,21 +21,27 @@ logger.setLevel(logging.INFO)
 def lambda_handler(event, context):
     print("Received event: " + json.dumps(event, indent=2))
     message = event["Records"][0]["Sns"]["Message"]
+    subject = event["Records"][0]["Sns"]['Subject']
 
     data = json.loads(message)
     token = data["approval"]["token"]
+    approval_review_link = data["approval"]["approvalReviewLink"]
+
     codepipeline_name = data["approval"]["pipelineName"]
 
     slack_message = {
         "channel": SLACK_CHANNEL,
-        "text": "Would you like to promote the build to production?",
+        "text": subject,
+        "callback_id": "approval-from-slack",
         "attachments": [
             {
-                "text": "Yes to deploy your build to production",
+                "text": "Yes to deploy your build to production :cloud:",
                 "fallback": "You are unable to promote a build",
-                "callback_id": "wopr_game",
                 "color": "#3AA3E3",
                 "attachment_type": "default",
+                "title": codepipeline_name,
+                "title_link": approval_review_link,
+                "thumb_url": "https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png",
                 "actions": [
                     {
                         "name": "deployment",
@@ -67,3 +73,4 @@ def lambda_handler(event, context):
     response.read()
 
     return None
+

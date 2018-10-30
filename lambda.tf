@@ -1,3 +1,4 @@
+# approval lambda
 resource "aws_lambda_function" "approval_lambda" {
   filename         = "${data.archive_file.approval.output_path}"
   function_name    = "sns-approval"
@@ -12,8 +13,21 @@ resource "aws_lambda_function" "approval_lambda" {
       SLACK_CHANNEL = "aws-codecommit"
     }
   }
+//  Use our common tags and add a specific name.
+  tags = "${merge(
+    local.common_tags
+  )}"
 }
 
+resource "aws_lambda_permission" "approval_lambda_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.approval_lambda.function_name}"
+  principal     = "sns.amazonaws.com"
+  source_arn    = "${aws_sns_topic.sns_lambda_slack.arn}"
+}
+
+# message_action lambda
 resource "aws_lambda_function" "message_action_lambda" {
   filename         = "${data.archive_file.message_action.output_path}"
   function_name    = "sns-message_action"
@@ -27,6 +41,11 @@ resource "aws_lambda_function" "message_action_lambda" {
       SLACK_VERIFICATION_TOKEN = "${data.aws_ssm_parameter.slack_verification_token.value}"
     }
   }
+//  Use our common tags and add a specific name.
+  tags = "${merge(
+    local.common_tags
+  )}"
+
 }
 
 # permissions for lambda to access apigw

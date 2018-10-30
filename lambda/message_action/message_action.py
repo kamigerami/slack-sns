@@ -10,9 +10,10 @@ SLACK_VERIFICATION_TOKEN = os.environ['SLACK_VERIFICATION_TOKEN']
 #Triggered by API Gateway
 #It kicks off a particular CodePipeline project
 def lambda_handler(event, context):
-    #print("Received event: " + json.dumps(event, indent=2))
-    body = parse_qs(event['body'])
-    payload = json.loads(body['payload'][0])
+    body = event['body']
+    # parse query string
+    # load as json
+    payload = json.loads(parse_qs(body)['payload'][0])
 
     # Validate Slack token
     if SLACK_VERIFICATION_TOKEN == payload['token']:
@@ -46,3 +47,4 @@ def send_slack_message(action_details):
                             result={'summary':'','status':codepipeline_status},
                             token=token)
     print(response_approval)
+

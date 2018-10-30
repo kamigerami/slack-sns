@@ -1,13 +1,31 @@
 ```
-# in progress ... not fully working
+# in progress 
 
-# set ssm parameter store values for
+# pre-req
+
+# create slack app
+
+# set aws ssm parameter store values for
 SLACK_VERIFICATION_TOKEN
 SLACK_WEBHOOK_URL 
-SLACK_CHANNEL
 
-# todo
-- add x-url-encoded mapping template to api gateway
-- change python code for message_actions
-- create a nicer menu for the approval in slack
+#channel you want to post to
+SLACK_CHANNEL 
+
+# setup terraform aws provider credentials
+
+# run terraform
+
+terraform init
+terraform plan
+terraform apply
+
+# use output from api gateway endpoint to update
+# your slack app message_actions url
+
+# create a codepipeline manual approval step
+# subscribe to sns that terraform created
+
+# run pipeline and watch the notification in slack
+
 ```
