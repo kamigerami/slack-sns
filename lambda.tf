@@ -10,7 +10,7 @@ resource "aws_lambda_function" "approval_lambda" {
   environment {
     variables = {
       SLACK_WEBHOOK_URL = "${data.aws_ssm_parameter.slack_webhook_url.value}"
-      SLACK_CHANNEL = "aws-codecommit"
+      SLACK_CHANNEL = "${var.slack_channel}"
     }
   }
 //  Use our common tags and add a specific name.

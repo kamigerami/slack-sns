@@ -32,10 +32,10 @@ def lambda_handler(event, context):
     slack_message = {
         "channel": SLACK_CHANNEL,
         "text": subject,
-        "callback_id": "approval-from-slack",
         "attachments": [
             {
                 "text": "Yes to deploy your build to production :cloud:",
+                "callback_id": "approval-from-slack",
                 "fallback": "You are unable to promote a build",
                 "color": "#3AA3E3",
                 "attachment_type": "default",
