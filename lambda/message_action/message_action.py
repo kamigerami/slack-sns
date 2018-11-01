@@ -19,10 +19,15 @@ def lambda_handler(event, context):
     callback_id = payload['callback_id']
     value = payload['actions'][0]['value']
     response_url = payload['response_url']
+    ts = payload['original_message']['ts']
+    SLACK_CHANNEL = payload['channel']['name']
+    subject = payload['original_message']['text']
+    codepipeline_name = json.loads(value)['codePipelineName']
+
 
     # Validate Slack token
     if SLACK_VERIFICATION_TOKEN == token:
-        send_slack_message(json.loads(value))
+        send_to_codepipeline(json.loads(value))
 
         # This will replace the interactive message with a simple text response.
         # You can implement a more complex message update if you would like.
@@ -39,7 +44,7 @@ def lambda_handler(event, context):
         }
 
 
-def send_slack_message(action_details):
+def send_to_codepipeline(action_details):
     codepipeline_status = "Approved" if action_details["approve"] else "Rejected"
     codepipeline_name = action_details["codePipelineName"]
     token = action_details["codePipelineToken"]

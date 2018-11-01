@@ -43,7 +43,9 @@ resource "aws_iam_role_policy" "iam_for_lambda" {
                 "codepipeline:GetPipelineExecution",
                 "codepipeline:ListPipelineExecutions",
                 "codepipeline:ListPipelines",
-                "codepipeline:PutApprovalResult"
+                "codepipeline:PutApprovalResult",
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords"
             ],
             "Resource": "*"
         }
