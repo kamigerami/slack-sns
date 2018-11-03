@@ -10,7 +10,7 @@ SLACK_VERIFICATION_TOKEN = os.environ['SLACK_VERIFICATION_TOKEN']
 #Triggered by API Gateway
 #It kicks off a particular CodePipeline project
 def lambda_handler(event, context):
-    print(event)
+    #print(event)
     body = event['body']
 
     # load as json
@@ -68,7 +68,7 @@ def send_to_codepipeline(user_name, value):
 
     # load as dict
     action_details = json.loads(value)
-    # create vars
+    # create var for pipelineName
     codepipeline_name = action_details["codePipelineName"]
 
     # initiate boto3 client for codepipeline
@@ -89,22 +89,16 @@ def send_to_codepipeline(user_name, value):
     # loop through each index in stages and check for stage thats  'InProgress'
     for index in range(len(stage_states)):
         # get token for the stage that is currently in progress
-        if 'InProgress' in stage_states[index]['actionStates'][0]['latestExecution']['status']:
+        if 'InProgress' in stage_states[index]['actionStates'][index]['latestExecution']['status']:
           # save token, stage_name, action_name
-          token = stage_states[index]['actionStates'][0]['latestExecution']['token']
+          token = stage_states[index]['actionStates'][index]['latestExecution']['token']
           stage_name = stage_states[index]['stageName']
-          action_name = stage_states[index]['actionStates'][0]['actionName']
-          approve_or_deny(codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status)
+          action_name = stage_states[index]['actionStates'][index]['actionName']
+          approve_or_deny(client, codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status)
           break
-        else:
-            return  {
-            "isBase64Encoded": "false",
-            "statusCode": 403,
-            "body": "{\"error\": \"Something went wrong when approving codepipeline\"}"
-            }
 
 
-def approve_or_deny(codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status):
+def approve_or_deny(client, codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status):
     client.put_approval_result(
         pipelineName=codepipeline_name,
         stageName=stage_name,
