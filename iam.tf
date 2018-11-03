@@ -1,6 +1,11 @@
 # general iam role for lambda
 resource "aws_iam_role" "iam_for_lambda" {
   name = "iam_for_lambda"
+  lifecycle {
+    ignore_changes = [
+      "assume_role_policy",
+    ]
+  }
 
   assume_role_policy = <<EOF
 {

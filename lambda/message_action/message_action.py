@@ -12,9 +12,11 @@ SLACK_VERIFICATION_TOKEN = os.environ['SLACK_VERIFICATION_TOKEN']
 def lambda_handler(event, context):
     print(event)
     body = event['body']
-    # parse query string
+
     # load as json
     payload = json.loads(parse_qs(body)['payload'][0])
+
+    # strings
     token = payload['token']
     callback_id = payload['callback_id']
     value = payload['actions'][0]['value']
@@ -22,20 +24,38 @@ def lambda_handler(event, context):
     ts = payload['original_message']['ts']
     SLACK_CHANNEL = payload['channel']['name']
     subject = payload['original_message']['text']
+    user_name = payload['user']['name']
+
     codepipeline_name = json.loads(value)['codePipelineName']
 
 
     # Validate Slack token
     if SLACK_VERIFICATION_TOKEN == token:
-        send_to_codepipeline(json.loads(value))
+        send_to_codepipeline(user_name, value)
 
         # This will replace the interactive message with a simple text response.
         # You can implement a more complex message update if you would like.
+        slack_message = {
+        "text": "The approval has been processed",
+        "attachments": [
+            {
+                "text": ":white_check_mark: {name} approved".format(name=user_name),
+                "callback_id": "approval-from-slack",
+                "fallback": "The approval has been processed",
+                "color": "good",
+                "attachment_type": "default",
+                "title": codepipeline_name,
+                "thumb_url": "https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png",
+                    }
+                ]
+            }
+
         return  {
             "isBase64Encoded": "false",
             "statusCode": 200,
-            "body": "{\"text\": \"The approval has been processed\"}"
+            "body": json.dumps(slack_message)
         }
+
     else:
         return  {
             "isBase64Encoded": "false",
@@ -44,18 +64,54 @@ def lambda_handler(event, context):
         }
 
 
-def send_to_codepipeline(action_details):
-    codepipeline_status = "Approved" if action_details["approve"] else "Rejected"
+def send_to_codepipeline(user_name, value):
+
+    # load as dict
+    action_details = json.loads(value)
+    # create vars
     codepipeline_name = action_details["codePipelineName"]
-    token = action_details["codePipelineToken"]
 
+    # initiate boto3 client for codepipeline
     client = boto3.client('codepipeline')
-    response_approval = client.put_approval_result(
-                            pipelineName=codepipeline_name,
-                            stageName='Approval',
-                            actionName='ApprovalOrDeny',
-                            result={'summary':'','status':codepipeline_status},
-                            token=token)
-    print(response_approval)
+
+    # check if we approved or rejected
+
+    if action_details['approve']:
+        codepipeline_status = "Approved"
+    else:
+        codepipeline_status = "Rejected"
+
+    # get the state of the pipeline
+    state = client.get_pipeline_state(name=codepipeline_name)
+    # get the stage states of the pipeline
+    stage_states = state['stageStates']
+
+    # loop through each index in stages and check for stage thats  'InProgress'
+    for index in range(len(stage_states)):
+        # get token for the stage that is currently in progress
+        if 'InProgress' in stage_states[index]['actionStates'][0]['latestExecution']['status']:
+          # save token, stage_name, action_name
+          token = stage_states[index]['actionStates'][0]['latestExecution']['token']
+          stage_name = stage_states[index]['stageName']
+          action_name = stage_states[index]['actionStates'][0]['actionName']
+          approve_or_deny(codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status)
+          break
+        else:
+            return  {
+            "isBase64Encoded": "false",
+            "statusCode": 403,
+            "body": "{\"error\": \"Something went wrong when approving codepipeline\"}"
+            }
 
 
+def approve_or_deny(codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status):
+    client.put_approval_result(
+        pipelineName=codepipeline_name,
+        stageName=stage_name,
+        actionName=action_name,
+        result={
+            'summary': 'Reviewed by' + user_name,
+            'status': codepipeline_status
+        },
+        token=token
+    )

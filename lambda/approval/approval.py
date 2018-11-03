@@ -37,7 +37,7 @@ def lambda_handler(event, context):
                 "text": "Yes to deploy your build to production :cloud:",
                 "callback_id": "approval-from-slack",
                 "fallback": "You are unable to promote a build",
-                "color": "#3AA3E3",
+                "color": "warning",
                 "attachment_type": "default",
                 "title": codepipeline_name,
                 "title_link": approval_review_link,

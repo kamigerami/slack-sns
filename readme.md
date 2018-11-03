@@ -2,8 +2,9 @@
 # in progress 
 
 # todo
-- add chat.update using slackclient
-- fix method responses / integrationr responses
+- nicer formatting
+- codecommit diff maybe
+- link to diff of commit in approval.py
 
 # pre-req
 
