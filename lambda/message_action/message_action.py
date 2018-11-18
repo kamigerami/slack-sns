@@ -68,7 +68,7 @@ def send_to_codepipeline(user_name, value):
 
     # load as dict
     action_details = json.loads(value)
-    # create var for pipelineName
+    # create vars
     codepipeline_name = action_details["codePipelineName"]
 
     # initiate boto3 client for codepipeline
@@ -88,14 +88,16 @@ def send_to_codepipeline(user_name, value):
 
     # loop through each index in stages and check for stage thats  'InProgress'
     for index in range(len(stage_states)):
-        # get token for the stage that is currently in progress
-        if 'InProgress' in stage_states[index]['actionStates'][index]['latestExecution']['status']:
-          # save token, stage_name, action_name
-          token = stage_states[index]['actionStates'][index]['latestExecution']['token']
-          stage_name = stage_states[index]['stageName']
-          action_name = stage_states[index]['actionStates'][index]['actionName']
-          approve_or_deny(client, codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status)
-          break
+        for index_two in range(len(stage_states[index]['actionStates'])):
+          # get token for the stage that is currently in progress
+          if 'InProgress' in stage_states[index]['actionStates'][index_two]['latestExecution']['status']:
+            # save token, stage_name, action_name
+            token = stage_states[index]['actionStates'][index_two]['latestExecution']['token']
+            stage_name = stage_states[index]['stageName']
+            action_name = stage_states[index]['actionStates'][index_two]['actionName']
+            approve_or_deny(client, codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status)
+            break
+
 
 
 def approve_or_deny(client, codepipeline_name, stage_name, action_name, token, user_name, codepipeline_status):
